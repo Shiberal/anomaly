@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:anomaly/people/hours.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 
@@ -55,6 +56,25 @@ class PlacesManager {
   }
 
   get placesCount => places.length;
+
+  isOutside(List<Hour> hours) {
+    for (Hour hour in hours) {
+      if (hour.totalHours - int.parse(hour.ferie!) > 0) {
+        print(hour.progettoID);
+        for (Place place in places) {
+          print("${hour.progettoID} : ${place.id}");
+          if (hour.progettoID == place.name) {
+            if (place.isOutside) {
+              print(place.isOutside);
+              print(place.name);
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
 }
 
 class Place {

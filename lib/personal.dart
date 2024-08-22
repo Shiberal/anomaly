@@ -55,8 +55,12 @@ class _PersonalState extends State<Personal> {
   Widget build(
     BuildContext context,
   ) {
-    DataTableSource personDataSource = PersonDataSource(widget.people,
-        widget.filterHours, selectedPerson, updateSelectedPerson);
+    DataTableSource personDataSource = PersonDataSource(
+        widget.people,
+        widget.filterHours,
+        selectedPerson,
+        updateSelectedPerson,
+        widget.placesManager);
     void loadExcel(String path) {
       if (kDebugMode) {
         print(path);
@@ -283,19 +287,19 @@ class _PersonalState extends State<Personal> {
                     });
                   },
                 ),
-                Divider(
+                const Divider(
                   color: Colors.black,
                   thickness: 3.0,
                   indent: 15.0,
                   endIndent: 15.0,
                 ),
                 Text(
-                  "${selectedPerson?.descrizioneDA != null ? "Descrizione ${selectedPerson!.descrizioneDA} : ${dayIndx} " : "Seleziona persona"}",
+                  selectedPerson?.descrizioneDA != null
+                      ? "Descrizione ${selectedPerson!.descrizioneDA} : Day: $dayIndx "
+                      : "Seleziona persona",
                   textAlign: TextAlign.center,
                 ),
                 ...[
-                  //if selected person is not null
-                  // ignore: unnecessary_null_comparison
                   if (selectedPerson != null) ...[
                     for (Hour hour in selectedPerson!.days[dayIndx].hours) ...[
                       ExpansionTile(
@@ -309,10 +313,9 @@ class _PersonalState extends State<Personal> {
                                 Expanded(
                                     flex: 1,
                                     child: Container(
-                                      decoration: BoxDecoration(
-                                          color: Colors.red,
-                                          borderRadius:
-                                              BorderRadius.circular(20.0)),
+                                      decoration: const BoxDecoration(
+                                        color: Color.fromARGB(255, 30, 89, 138),
+                                      ),
                                       child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,

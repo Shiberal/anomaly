@@ -51,11 +51,12 @@ class Person {
 
 class PersonDataSource extends DataTableSource {
   PersonDataSource(this.persons, this.filterHours, this.selectedPerson,
-      this.updateSelectedPerson);
+      this.updateSelectedPerson, this.placesManager);
 
   final List<Person> persons;
   final RangeValues filterHours;
   void Function(Person person, int day) updateSelectedPerson;
+  PlacesManager placesManager;
 
   Person? selectedPerson;
 
@@ -79,6 +80,14 @@ class PersonDataSource extends DataTableSource {
                   child: Tooltip(
                     message: day.ordHours(),
                     child: TextButton(
+                        style: ButtonStyle(
+                          foregroundColor:
+                              // if there is at least one hour where has total > 0 check if is outside in placesManager if so color is yellow else is white
+                              WidgetStateProperty.all<Color>(
+                                  placesManager.isOutside(day.hours)
+                                      ? Colors.yellow
+                                      : Colors.white),
+                        ),
                         onPressed: () {
                           updateSelectedPerson(person, day.day);
                         },
@@ -89,6 +98,14 @@ class PersonDataSource extends DataTableSource {
                   child: Tooltip(
                     message: day.pioHours(),
                     child: TextButton(
+                        style: ButtonStyle(
+                          foregroundColor:
+                              // if there is at least one hour where has total > 0 check if is outside in placesManager if so color is yellow else is white
+                              WidgetStateProperty.all<Color>(
+                                  placesManager.isOutside(day.hours)
+                                      ? Colors.yellow
+                                      : Colors.white),
+                        ),
                         onPressed: () {
                           updateSelectedPerson(
                               person, day.day); // Call the callback
@@ -100,6 +117,14 @@ class PersonDataSource extends DataTableSource {
                   child: Tooltip(
                     message: day.malHours(),
                     child: TextButton(
+                        style: ButtonStyle(
+                          foregroundColor:
+                              // if there is at least one hour where has total > 0 check if is outside in placesManager if so color is yellow else is white
+                              WidgetStateProperty.all<Color>(
+                                  placesManager.isOutside(day.hours)
+                                      ? Colors.yellow
+                                      : Colors.white),
+                        ),
                         onPressed: () {
                           updateSelectedPerson(person, day.day);
                         },
@@ -110,6 +135,14 @@ class PersonDataSource extends DataTableSource {
                   child: Tooltip(
                     message: day.ferHours(),
                     child: TextButton(
+                        style: ButtonStyle(
+                          foregroundColor:
+                              // if there is at least one hour where has total > 0 check if is outside in placesManager if so color is yellow else is white
+                              WidgetStateProperty.all<Color>(
+                                  placesManager.isOutside(day.hours)
+                                      ? Colors.yellow
+                                      : Colors.white),
+                        ),
                         onPressed: () {
                           updateSelectedPerson(person, day.day);
                         },
