@@ -72,13 +72,18 @@ class Day {
   }
 
   String ordHours() {
-    String out = '';
-    for (Hour hour in hours) {
-      if (int.tryParse(hour.ordinario!)! > 0) {
-        out += '${hour.ordinario!} ${hour.progetto}\n';
+    try {
+      String out = '';
+
+      for (Hour hour in hours) {
+        if (int.tryParse(hour.ordinario!)! > 0) {
+          out += '${hour.ordinario!} ${hour.progetto}\n';
+        }
       }
+      return out;
+    } catch (e) {
+      return '';
     }
-    return out;
   }
 
   isAnomalyColor(min, max) {

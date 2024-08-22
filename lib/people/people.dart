@@ -1,5 +1,6 @@
 import 'package:anomaly/people/days.dart';
 import 'package:anomaly/people/hours.dart';
+import 'package:anomaly/places.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_excel/excel.dart';
@@ -49,13 +50,19 @@ class Person {
 }
 
 class PersonDataSource extends DataTableSource {
-  PersonDataSource(this.persons, this.filterHours);
+  PersonDataSource(this.persons, this.filterHours, this.selectedPerson,
+      this.updateSelectedPerson);
+
   final List<Person> persons;
   final RangeValues filterHours;
+  void Function(Person person, int day) updateSelectedPerson;
+
+  Person? selectedPerson;
 
   @override
   DataRow? getRow(int index) {
     final Person person = persons[index];
+
     return DataRow(
       cells: <DataCell>[
         DataCell(Text(person.descrizioneDA)),
@@ -73,13 +80,7 @@ class PersonDataSource extends DataTableSource {
                     message: day.ordHours(),
                     child: TextButton(
                         onPressed: () {
-                          List<Hour> hours = day.hours;
-                          for (Hour hour in hours) {
-                            if (kDebugMode) {
-                              print(
-                                  "${hour.progetto}, ${hour.ordinario}, ${hour.pioggia}, ${hour.malattia}, ${hour.ferie}");
-                            }
-                          }
+                          updateSelectedPerson(person, day.day);
                         },
                         child: Text(day.totalOrdinario.toString())),
                   ),
@@ -88,7 +89,10 @@ class PersonDataSource extends DataTableSource {
                   child: Tooltip(
                     message: day.pioHours(),
                     child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          updateSelectedPerson(
+                              person, day.day); // Call the callback
+                        },
                         child: Text(day.totalPioggia.toString())),
                   ),
                 ),
@@ -96,7 +100,9 @@ class PersonDataSource extends DataTableSource {
                   child: Tooltip(
                     message: day.malHours(),
                     child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          updateSelectedPerson(person, day.day);
+                        },
                         child: Text(day.totalMalattia.toString())),
                   ),
                 ),
@@ -104,7 +110,9 @@ class PersonDataSource extends DataTableSource {
                   child: Tooltip(
                     message: day.ferHours(),
                     child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          updateSelectedPerson(person, day.day);
+                        },
                         child: Text(day.totalFerie.toString())),
                   ),
                 ),
@@ -133,7 +141,8 @@ List<Person> extractPeople(
     bool isPerson,
     RangeValues filterHours,
     bool onlyAnomalies,
-    bool sortByHours) {
+    bool sortByHours,
+    PlacesManager placesManager) {
   List<Person> people = [];
   var sheet = excel.tables[sheetName];
 
@@ -171,6 +180,9 @@ List<Person> extractPeople(
 
     // If the person doesn't exist, create a new one
     if (person == null) {
+      placesManager
+          .addPlace(Place(row[0]?.value ?? '', row[6]?.value ?? '', false));
+
       person = Person(
         row[0]?.value ?? '', // Cod. Progetto
         row[1]?.value ?? '', // Cod. Categoria
@@ -180,6 +192,7 @@ List<Person> extractPeople(
         row[5]?.value ?? '', // Cod. WBS
         row[6]?.value ?? '', // Des. WBS
       );
+
       addEnabler = true;
     }
 

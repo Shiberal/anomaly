@@ -1,4 +1,6 @@
+import 'package:anomaly/people/people.dart';
 import 'package:anomaly/personal.dart';
+import 'package:anomaly/places.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -35,17 +37,27 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   late TabController tabController;
-
+  late PlacesManager placesManager;
+  RangeValues filterHours = const RangeValues(0, 24);
+  late List<Person> people;
+  bool isVehicle = false;
+  bool isPerson = false;
+  bool onlyAnomalies = false;
+  bool sortByHours = false;
+  late String path;
   @override
   void initState() {
     tabController = TabController(length: 2, vsync: this);
+    placesManager = PlacesManager();
+    placesManager.loadPlaces();
+    people = [];
+    path = '';
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     TabController tabController = TabController(length: 2, vsync: this);
-
     return Scaffold(
       primary: true,
       body: Column(
@@ -63,8 +75,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             child: TabBarView(
               controller: tabController,
               children: [
-                const Personal(),
-                const Flex(direction: Axis.vertical, children: []),
+                Personal(placesManager, people, filterHours, isPerson,
+                    isVehicle, onlyAnomalies, sortByHours, path),
+                Places(placesManager)
               ],
             ),
           ),

@@ -1,12 +1,19 @@
+// ignore_for_file: file_names
+
 import 'dart:io';
+import 'package:anomaly/people/hours.dart';
 import 'package:anomaly/people/people.dart';
+import 'package:anomaly/places.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_excel/excel.dart';
 
+// ignore: must_be_immutable
 class Personal extends StatefulWidget {
-  const Personal({super.key});
+  Personal(this.placesManager, this.people, this.filterHours, this.isPerson,
+      this.isVehicle, this.onlyAnomalies, this.sortByHours, this.path,
+      {super.key});
 
   @override
   State<Personal> createState() => _PersonalState();
@@ -15,37 +22,59 @@ class Personal extends StatefulWidget {
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return 'Personal';
   }
+
+  final PlacesManager placesManager;
+  List<Person> people;
+  RangeValues filterHours;
+  bool isPerson;
+  bool isVehicle;
+  bool onlyAnomalies;
+  bool sortByHours;
+  String path;
 }
 
 class _PersonalState extends State<Personal> {
-  late String? path;
-  RangeValues filterHours = const RangeValues(0, 24);
-  List<Person> people = [];
-  bool isVehicle = false;
-  bool isPerson = false;
-  bool onlyAnomalies = false;
-  bool sortByHours = false;
+  late Person? selectedPerson;
+  late int dayIndx;
 
   @override
   void initState() {
+    selectedPerson = (widget.people.isNotEmpty ? widget.people[0] : null);
+    dayIndx = 0;
     super.initState();
-    path = "";
+  }
+
+  void updateSelectedPerson(Person person, int dayIndxCL) {
+    setState(() {
+      selectedPerson = person;
+      dayIndx = dayIndxCL - 1;
+    });
   }
 
   @override
-  Widget build(BuildContext context) {
-    DataTableSource personDataSource = PersonDataSource(people, filterHours);
+  Widget build(
+    BuildContext context,
+  ) {
+    DataTableSource personDataSource = PersonDataSource(widget.people,
+        widget.filterHours, selectedPerson, updateSelectedPerson);
     void loadExcel(String path) {
       if (kDebugMode) {
         print(path);
       }
       var bytes = File(path).readAsBytesSync();
       var excel = Excel.decodeBytes(bytes);
-      List<Person> extractedPeople = extractPeople(excel, 'Sheet', isVehicle,
-          isPerson, filterHours, onlyAnomalies, sortByHours);
+      List<Person> extractedPeople = extractPeople(
+          excel,
+          'Sheet',
+          widget.isVehicle,
+          widget.isPerson,
+          widget.filterHours,
+          widget.onlyAnomalies,
+          widget.sortByHours,
+          widget.placesManager);
 
       setState(() {
-        people = extractedPeople;
+        widget.people = extractedPeople;
       });
     }
 
@@ -58,16 +87,17 @@ class _PersonalState extends State<Personal> {
             direction: Axis.vertical,
             children: [
               Expanded(
-                  flex: 1,
+                  flex: 3,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: PaginatedDataTable(
                         rowsPerPage:
-                            MediaQuery.of(context).size.width > 800 ? 12 : 8,
+                            MediaQuery.of(context).size.width > 800 ? 9 : 8,
                         source: personDataSource,
                         columnSpacing: 10,
                         header: const Text("Personale"),
                         sortColumnIndex: 1,
+                        dataRowMaxHeight: 50,
                         showEmptyRows: true,
                         columns: [
                           const DataColumn(
@@ -139,8 +169,8 @@ class _PersonalState extends State<Personal> {
                     ).then((result) {
                       if (result != null) {
                         List<PlatformFile> files = result.files;
-                        path = files[0].path!;
-                        loadExcel(files[0].path!);
+                        widget.path = files[0].path!;
+                        loadExcel(widget.path);
                       } else {
                         // User canceled the picker
                       }
@@ -156,19 +186,19 @@ class _PersonalState extends State<Personal> {
                   Padding(
                     padding: const EdgeInsets.only(left: 15.0),
                     child: Text(
-                        "Inizio: ${filterHours.start} - Fine: ${filterHours.end}"),
+                        "Inizio: ${widget.filterHours.start} - Fine: ${widget.filterHours.end}"),
                   ),
                   Expanded(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         DropdownButton<double>(
-                          value: filterHours.start,
+                          value: widget.filterHours.start,
                           onChanged: (double? newValue) {
                             setState(() {
-                              filterHours =
-                                  RangeValues(newValue!, filterHours.end);
-                              loadExcel(path!);
+                              widget.filterHours = RangeValues(
+                                  newValue!, widget.filterHours.end);
+                              loadExcel(widget.path);
                             });
                           },
                           items: List<int>.generate(25, (index) => index)
@@ -181,12 +211,12 @@ class _PersonalState extends State<Personal> {
                         ),
                         const Text("-"),
                         DropdownButton<double>(
-                          value: filterHours.end,
+                          value: widget.filterHours.end,
                           onChanged: (double? newValue) {
                             setState(() {
-                              filterHours =
-                                  RangeValues(filterHours.start, newValue!);
-                              loadExcel(path!);
+                              widget.filterHours = RangeValues(
+                                  widget.filterHours.start, newValue!);
+                              loadExcel(widget.path);
                             });
                           },
                           items: List<int>.generate(25, (index) => index)
@@ -202,27 +232,28 @@ class _PersonalState extends State<Personal> {
                   )
                 ]),
                 CheckboxListTile(
-                  value: isVehicle,
+                  value: widget.isVehicle,
                   title: const Text("Veicoli"),
                   onChanged: (bool? value) {
                     setState(() {
-                      isVehicle = value!;
-                      loadExcel(path!);
+                      widget.isVehicle = value!;
+                      loadExcel(widget.path);
                     });
                   },
                 ),
                 CheckboxListTile(
-                  value: isPerson,
+                  value: widget.isPerson,
                   title: const Text("Persone"),
                   onChanged: (bool? value) {
                     setState(() {
                       if (value != null) {
-                        isPerson = value;
-                        if (path != null && path!.isNotEmpty) {
+                        widget.isPerson = value;
+                        // ignore: unnecessary_null_comparison
+                        if (widget.path != null && widget.path.isNotEmpty) {
                           if (kDebugMode) {
-                            print(path);
+                            print(widget.path);
                           }
-                          loadExcel(path!);
+                          loadExcel(widget.path);
                         } else {
                           if (kDebugMode) {
                             print("Error: Path is null or empty.");
@@ -233,25 +264,83 @@ class _PersonalState extends State<Personal> {
                   },
                 ),
                 CheckboxListTile(
-                  value: onlyAnomalies,
+                  value: widget.onlyAnomalies,
                   title: const Text("Mostra solo anomalie"),
                   onChanged: (bool? value) {
                     setState(() {
-                      onlyAnomalies = value!;
-                      loadExcel(path!);
+                      widget.onlyAnomalies = value!;
+                      loadExcel(widget.path);
                     });
                   },
                 ),
                 CheckboxListTile(
-                  value: sortByHours,
+                  value: widget.sortByHours,
                   title: const Text("Ordina per ore"),
                   onChanged: (bool? value) {
                     setState(() {
-                      sortByHours = value!;
-                      loadExcel(path!);
+                      widget.sortByHours = value!;
+                      loadExcel(widget.path);
                     });
                   },
                 ),
+                Divider(
+                  color: Colors.black,
+                  thickness: 3.0,
+                  indent: 15.0,
+                  endIndent: 15.0,
+                ),
+                Text(
+                  "${selectedPerson?.descrizioneDA != null ? "Descrizione ${selectedPerson!.descrizioneDA} : ${dayIndx} " : "Seleziona persona"}",
+                  textAlign: TextAlign.center,
+                ),
+                ...[
+                  //if selected person is not null
+                  // ignore: unnecessary_null_comparison
+                  if (selectedPerson != null) ...[
+                    for (Hour hour in selectedPerson!.days[dayIndx].hours) ...[
+                      ExpansionTile(
+                          title: Text(
+                            hour.ordinario! + hour.progetto,
+                          ),
+                          children: [
+                            Flex(
+                              direction: Axis.horizontal,
+                              children: [
+                                Expanded(
+                                    flex: 1,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius:
+                                              BorderRadius.circular(20.0)),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          TextButton(
+                                              onPressed: () {},
+                                              child: Text(
+                                                  "Ord ${hour.ordinario}")),
+                                          TextButton(
+                                              onPressed: () {},
+                                              child:
+                                                  Text("Pio ${hour.pioggia}")),
+                                          TextButton(
+                                              onPressed: () {},
+                                              child:
+                                                  Text("Mal ${hour.malattia}")),
+                                          TextButton(
+                                              onPressed: () {},
+                                              child: Text("Fer ${hour.ferie}")),
+                                        ],
+                                      ),
+                                    )),
+                              ],
+                            )
+                          ])
+                    ]
+                  ]
+                ],
               ],
             ),
           ),
