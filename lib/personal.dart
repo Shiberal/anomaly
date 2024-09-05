@@ -6,6 +6,7 @@ import 'package:anomaly/people/people.dart';
 import 'package:anomaly/places.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_excel/excel.dart';
 
@@ -82,6 +83,9 @@ class _PersonalState extends State<Personal> {
       });
     }
 
+    final outerController = ScrollController();
+    final innerController = ScrollController();
+
     return Flex(
       direction: Axis.horizontal,
       children: [
@@ -92,66 +96,79 @@ class _PersonalState extends State<Personal> {
             children: [
               Expanded(
                   flex: 3,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: PaginatedDataTable(
-                        rowsPerPage:
-                            MediaQuery.of(context).size.width > 800 ? 9 : 8,
-                        source: personDataSource,
-                        columnSpacing: 10,
-                        header: const Text("Personale"),
-                        sortColumnIndex: 1,
-                        dataRowMaxHeight: 50,
-                        showEmptyRows: true,
-                        columns: [
-                          const DataColumn(
+                  child: Listener(
+                    onPointerSignal: (event) {
+                      if (event is PointerScrollEvent) {
+                        final offset = event.scrollDelta.dy;
+
+                        innerController.jumpTo(innerController.offset + offset);
+                        outerController.jumpTo(outerController.offset - offset);
+                      }
+                    },
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      controller: innerController,
+                      child: PaginatedDataTable(
+                          rowsPerPage:
+                              MediaQuery.of(context).size.width > 800 ? 9 : 8,
+                          source: personDataSource,
+                          columnSpacing: 10,
+                          header: const Text("Personale"),
+                          sortColumnIndex: 1,
+                          dataRowMaxHeight: 50,
+                          showEmptyRows: true,
+                          columns: [
+                            const DataColumn(
+                                headingRowAlignment: MainAxisAlignment.center,
+                                label: SizedBox(
+                                  width: 350,
+                                  child: Text("Nome"),
+                                )),
+                            const DataColumn(
                               headingRowAlignment: MainAxisAlignment.center,
-                              label: SizedBox(
-                                width: 350,
-                                child: Text("Nome"),
-                              )),
-                          const DataColumn(
-                            headingRowAlignment: MainAxisAlignment.center,
-                            label: Text("ID"),
-                            numeric: true,
-                          ),
-                          ...[
-                            for (var i = 1; i < 32; i++)
-                              DataColumn(
-                                  headingRowAlignment: MainAxisAlignment.end,
-                                  label: SizedBox(
-                                    width: 300,
-                                    child: Flex(
-                                        direction: Axis.horizontal,
-                                        children: [
-                                          Expanded(
-                                            flex: 1,
-                                            child: Text("$i",
-                                                textAlign: TextAlign.start),
-                                          ),
-                                          const Expanded(
+                              label: Text("ID"),
+                              numeric: true,
+                            ),
+                            ...[
+                              for (var i = 1; i < 32; i++)
+                                DataColumn(
+                                    headingRowAlignment: MainAxisAlignment.end,
+                                    label: SizedBox(
+                                      width: 300,
+                                      child: Flex(
+                                          direction: Axis.horizontal,
+                                          children: [
+                                            Expanded(
+                                              flex: 1,
+                                              child: Text("$i",
+                                                  textAlign: TextAlign.start),
+                                            ),
+                                            const Expanded(
+                                                flex: 2,
+                                                child: Text(
+                                                  "Ord",
+                                                  textAlign: TextAlign.center,
+                                                )),
+                                            const Expanded(
                                               flex: 2,
-                                              child: Text(
-                                                "Ord",
-                                                textAlign: TextAlign.center,
-                                              )),
-                                          const Expanded(
-                                            flex: 2,
-                                            child: Text("Pio",
-                                                textAlign: TextAlign.center),
-                                          ),
-                                          const Expanded(
-                                              flex: 2,
-                                              child: Text("Mal",
-                                                  textAlign: TextAlign.center)),
-                                          const Expanded(
-                                              flex: 2,
-                                              child: Text("Fer",
-                                                  textAlign: TextAlign.center)),
-                                        ]),
-                                  ))
-                          ]
-                        ]),
+                                              child: Text("Pio",
+                                                  textAlign: TextAlign.center),
+                                            ),
+                                            const Expanded(
+                                                flex: 2,
+                                                child: Text("Mal",
+                                                    textAlign:
+                                                        TextAlign.center)),
+                                            const Expanded(
+                                                flex: 2,
+                                                child: Text("Fer",
+                                                    textAlign:
+                                                        TextAlign.center)),
+                                          ]),
+                                    ))
+                            ]
+                          ]),
+                    ),
                   )),
             ],
           ),
