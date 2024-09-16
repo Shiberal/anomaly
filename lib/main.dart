@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       title: '',
       theme: ThemeData(
           useMaterial3: true,
-          scrollbarTheme: ScrollbarThemeData(
+          scrollbarTheme: const ScrollbarThemeData(
             thumbVisibility: WidgetStatePropertyAll(true),
           )),
       darkTheme: ThemeData(
