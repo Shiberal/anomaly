@@ -28,6 +28,7 @@ jobs:
         with:
           channel: stable
           flutter-version-file: pubspec.yaml
+      - run: winget install --id MikeFarah.yq
       - run: flutter config --enable-windows-desktop
       - run: flutter create .
       - run: flutter build windows
