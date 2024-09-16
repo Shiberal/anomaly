@@ -33,7 +33,8 @@ jobs:
       - run: flutter config --enable-windows-desktop
       - run: flutter create .
       - run: flutter build windows
+
       - uses: actions/upload-artifact@master
         with:
           name: windows
-          path: build\windows\runner\Release
+          path: build\windows\x64\runner\Release
