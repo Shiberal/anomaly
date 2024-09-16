@@ -19,10 +19,8 @@ jobs:
  windows:
     runs-on: windows-latest
     steps:
-      - uses: mikefarah/yq@master
-        with:
-          cmd: install
-          
+      - run: choco install yq
+
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
