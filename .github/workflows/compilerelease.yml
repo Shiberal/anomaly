@@ -19,6 +19,7 @@ jobs:
  windows:
     runs-on: windows-latest
     steps:
+      - run: winget install --id MikeFarah.yq
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
@@ -28,7 +29,6 @@ jobs:
         with:
           channel: stable
           flutter-version-file: pubspec.yaml
-      - run: winget install --id MikeFarah.yq
       - run: flutter config --enable-windows-desktop
       - run: flutter create .
       - run: flutter build windows
