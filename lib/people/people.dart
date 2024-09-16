@@ -66,7 +66,6 @@ class PersonDataSource extends DataTableSource {
 
     return DataRow(
       cells: <DataCell>[
-        DataCell(Text(person.descrizioneDA)),
         DataCell(Text(person.codiceID)),
         ...[
           for (Day day in person.days) ...[

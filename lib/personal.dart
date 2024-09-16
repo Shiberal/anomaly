@@ -8,7 +8,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_excel/excel.dart';
+import 'package:updat/updat.dart';
+import 'package:http/http.dart' as http;
 
 // ignore: must_be_immutable
 class Personal extends StatefulWidget {
@@ -37,11 +40,24 @@ class Personal extends StatefulWidget {
 class _PersonalState extends State<Personal> {
   late Person? selectedPerson;
   late int dayIndx;
+  late PersonDataSource personDataSource;
+  late int page;
 
   @override
   void initState() {
     selectedPerson = (widget.people.isNotEmpty ? widget.people[0] : null);
     dayIndx = 0;
+    page = 0;
+
+    // Initialize personDataSource with the initial data
+    personDataSource = PersonDataSource(
+      widget.people,
+      widget.filterHours,
+      selectedPerson,
+      updateSelectedPerson,
+      widget.placesManager,
+    );
+
     super.initState();
   }
 
@@ -63,34 +79,81 @@ class _PersonalState extends State<Personal> {
         updateSelectedPerson,
         widget.placesManager);
     void loadExcel(String path) {
-      if (kDebugMode) {
-        print(path);
-      }
-      var bytes = File(path).readAsBytesSync();
-      var excel = Excel.decodeBytes(bytes);
-      List<Person> extractedPeople = extractPeople(
-          excel,
-          'Sheet',
-          widget.isVehicle,
-          widget.isPerson,
-          widget.filterHours,
-          widget.onlyAnomalies,
-          widget.sortByHours,
-          widget.placesManager);
+      // ignore: prefer_typing_uninitialized_variables
+      late var bytes;
+      // ignore: prefer_typing_uninitialized_variables
+      late var excel;
+      late List<Person> extractedPeople;
 
       setState(() {
+        bytes = File(path).readAsBytesSync();
+        excel = Excel.decodeBytes(bytes);
+        extractedPeople = extractPeople(
+            excel,
+            'Sheet',
+            widget.isVehicle,
+            widget.isPerson,
+            widget.filterHours,
+            widget.onlyAnomalies,
+            widget.sortByHours,
+            widget.placesManager);
         widget.people = extractedPeople;
       });
     }
 
     final outerController = ScrollController();
     final innerController = ScrollController();
+    final pageController = ScrollController();
 
     return Flex(
       direction: Axis.horizontal,
       children: [
         Expanded(
-          flex: 4,
+            flex: 2,
+            child: Container(
+              height: double.infinity,
+              padding: const EdgeInsets.only(top: 124.0),
+              decoration: BoxDecoration(
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: ListView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: 9,
+                itemBuilder: (context, index) {
+                  if ((page) + index >= (widget.people.length)) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return ListTile(
+                      minTileHeight: 50,
+                      title: Text(
+                        widget.people[(page) + index].descrizioneDA,
+                        textAlign: TextAlign.left,
+                        style: const TextStyle(
+                          fontSize: 12,
+                        ),
+                      ), // display name
+                      // if odd color is lightgrey, if even color is grey
+                      tileColor: index % 2 == 0
+                          ? const Color.fromARGB(255, 57, 59, 60)
+                          : const Color.fromARGB(255, 30, 31, 31),
+                      onTap: () {
+                        //on tap copy the id to the clipboard
+                        Clipboard.setData(ClipboardData(
+                            text: widget.people[(page) + index].codiceID));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                "Copiato ${widget.people[(page) + index].codiceID}"),
+                          ),
+                        );
+                      });
+                },
+              ),
+            )),
+        Expanded(
+          flex: 7,
           child: Flex(
             direction: Axis.vertical,
             children: [
@@ -105,80 +168,111 @@ class _PersonalState extends State<Personal> {
                         outerController.jumpTo(outerController.offset - offset);
                       }
                     },
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
+                    child: Scrollbar(
                       controller: innerController,
-                      child: PaginatedDataTable(
-                          rowsPerPage:
-                              MediaQuery.of(context).size.width > 800 ? 9 : 8,
-                          source: personDataSource,
-                          columnSpacing: 10,
-                          header: const Text("Personale"),
-                          sortColumnIndex: 1,
-                          dataRowMaxHeight: 50,
-                          showEmptyRows: true,
-                          columns: [
-                            const DataColumn(
+                      scrollbarOrientation: ScrollbarOrientation.bottom,
+                      thumbVisibility: true,
+                      trackVisibility: true,
+                      thickness: 200,
+                      radius: const Radius.circular(10),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        controller: innerController,
+                        child: PaginatedDataTable(
+                            controller: pageController,
+                            onPageChanged: (value) {
+                              setState(() {
+                                page = value;
+                                print("page: $page");
+                              });
+                            },
+                            rowsPerPage:
+                                MediaQuery.of(context).size.width > 800 ? 9 : 8,
+                            source: personDataSource,
+                            columnSpacing: 10,
+                            header: const Text("Personale"),
+                            sortColumnIndex: 1,
+                            dataRowMaxHeight: 50,
+                            showEmptyRows: true,
+                            columns: [
+                              const DataColumn(
                                 headingRowAlignment: MainAxisAlignment.center,
-                                label: SizedBox(
-                                  width: 350,
-                                  child: Text("Nome"),
-                                )),
-                            const DataColumn(
-                              headingRowAlignment: MainAxisAlignment.center,
-                              label: Text("ID"),
-                              numeric: true,
-                            ),
-                            ...[
-                              for (var i = 1; i < 32; i++)
-                                DataColumn(
-                                    headingRowAlignment: MainAxisAlignment.end,
-                                    label: SizedBox(
-                                      width: 300,
-                                      child: Flex(
-                                          direction: Axis.horizontal,
-                                          children: [
-                                            Expanded(
-                                              flex: 1,
-                                              child: Text("$i",
-                                                  textAlign: TextAlign.start),
-                                            ),
-                                            const Expanded(
+                                label: Text("ID"),
+                                numeric: true,
+                              ),
+                              ...[
+                                for (var i = 1; i < 32; i++)
+                                  DataColumn(
+                                      headingRowAlignment:
+                                          MainAxisAlignment.end,
+                                      label: SizedBox(
+                                        width: 300,
+                                        child: Flex(
+                                            direction: Axis.horizontal,
+                                            children: [
+                                              Expanded(
+                                                flex: 1,
+                                                child: Text("$i",
+                                                    textAlign: TextAlign.start),
+                                              ),
+                                              const Expanded(
+                                                  flex: 2,
+                                                  child: Text(
+                                                    "Ord",
+                                                    textAlign: TextAlign.center,
+                                                  )),
+                                              const Expanded(
                                                 flex: 2,
-                                                child: Text(
-                                                  "Ord",
-                                                  textAlign: TextAlign.center,
-                                                )),
-                                            const Expanded(
-                                              flex: 2,
-                                              child: Text("Pio",
-                                                  textAlign: TextAlign.center),
-                                            ),
-                                            const Expanded(
-                                                flex: 2,
-                                                child: Text("Mal",
+                                                child: Text("Pio",
                                                     textAlign:
-                                                        TextAlign.center)),
-                                            const Expanded(
-                                                flex: 2,
-                                                child: Text("Fer",
-                                                    textAlign:
-                                                        TextAlign.center)),
-                                          ]),
-                                    ))
-                            ]
-                          ]),
+                                                        TextAlign.center),
+                                              ),
+                                              const Expanded(
+                                                  flex: 2,
+                                                  child: Text("Mal",
+                                                      textAlign:
+                                                          TextAlign.center)),
+                                              const Expanded(
+                                                  flex: 2,
+                                                  child: Text("Fer",
+                                                      textAlign:
+                                                          TextAlign.center)),
+                                            ]),
+                                      ))
+                              ]
+                            ]),
+                      ),
                     ),
                   )),
             ],
           ),
         ),
         Expanded(
-          flex: 1,
+          flex: 2,
           child: Container(
             color: Colors.blue,
             child: ListView(
               children: [
+                UpdatWidget(
+                  currentVersion: "1.0.0",
+                  getLatestVersion: () async {
+                    //get latest version from github
+                    String url_repo =
+                        "https://api.github.com/repos/Shiberal/anomaly/releases/latest";
+                    var response = await http.get(Uri.parse(url_repo));
+                    if (response.statusCode == 200) {
+                      return response.body;
+                    } else {
+                      return "1.0.0";
+                    }
+                  },
+                  getBinaryUrl: (latestVersion) async {
+                    // Here you provide the link to the binary the user should download. Make sure it is the correct one for the platform!
+                    return "https://github.com/Shiberal/anomaly/releases/bin.exe";
+                  },
+                  // Lastly, enter your app name so we know what to call your files.
+                  appName: "Updat Example",
+                ),
                 const SizedBox(height: 10),
                 TextButton(
                   onPressed: () {
@@ -204,11 +298,6 @@ class _PersonalState extends State<Personal> {
                   child: Text("Filtro ore "),
                 ),
                 Flex(direction: Axis.horizontal, children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 15.0),
-                    child: Text(
-                        "Inizio: ${widget.filterHours.start} - Fine: ${widget.filterHours.end}"),
-                  ),
                   Expanded(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -312,7 +401,7 @@ class _PersonalState extends State<Personal> {
                 ),
                 Text(
                   selectedPerson?.descrizioneDA != null
-                      ? "Descrizione ${selectedPerson!.descrizioneDA} : Day: $dayIndx "
+                      ? "Descrizione ${selectedPerson!.descrizioneDA} : Day: ${dayIndx + 1} "
                       : "Seleziona persona",
                   textAlign: TextAlign.center,
                 ),
@@ -321,7 +410,7 @@ class _PersonalState extends State<Personal> {
                     for (Hour hour in selectedPerson!.days[dayIndx].hours) ...[
                       ExpansionTile(
                           title: Text(
-                            hour.ordinario! + hour.progetto,
+                            hour.ordinario! + " " + hour.progetto,
                           ),
                           children: [
                             Flex(
@@ -338,19 +427,77 @@ class _PersonalState extends State<Personal> {
                                             MainAxisAlignment.center,
                                         children: [
                                           TextButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                //copy the code to clipboard
+
+                                                Clipboard.setData(ClipboardData(
+                                                    text:
+                                                        "${hour.progettoID}"));
+
+                                                // toast
+
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        "Copiato ${hour.progettoID}"),
+                                                  ),
+                                                );
+                                              },
                                               child: Text(
                                                   "Ord ${hour.ordinario}")),
                                           TextButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                Clipboard.setData(ClipboardData(
+                                                    text:
+                                                        "${hour.progettoID}"));
+
+                                                // toast
+
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        "Copiato ${hour.progettoID}"),
+                                                  ),
+                                                );
+                                              },
                                               child:
                                                   Text("Pio ${hour.pioggia}")),
                                           TextButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                Clipboard.setData(ClipboardData(
+                                                    text:
+                                                        "${hour.progettoID}"));
+
+                                                // toast
+
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        "Copiato ${hour.progettoID}"),
+                                                  ),
+                                                );
+                                              },
                                               child:
                                                   Text("Mal ${hour.malattia}")),
                                           TextButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                Clipboard.setData(ClipboardData(
+                                                    text:
+                                                        "${hour.progettoID}"));
+
+                                                // toast
+
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        "Copiato ${hour.progettoID}"),
+                                                  ),
+                                                );
+                                              },
                                               child: Text("Fer ${hour.ferie}")),
                                         ],
                                       ),

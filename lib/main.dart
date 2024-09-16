@@ -15,8 +15,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '',
       theme: ThemeData(
-        useMaterial3: true,
-      ),
+          useMaterial3: true,
+          scrollbarTheme: ScrollbarThemeData(
+            thumbVisibility: WidgetStatePropertyAll(true),
+          )),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
@@ -45,6 +47,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   bool onlyAnomalies = false;
   bool sortByHours = false;
   late String path;
+  late Widget viewPersonal;
+
   @override
   void initState() {
     tabController = TabController(length: 2, vsync: this);
@@ -52,6 +56,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     placesManager.loadPlaces();
     people = [];
     path = '';
+    viewPersonal = Personal(placesManager, people, filterHours, isPerson,
+        isVehicle, onlyAnomalies, sortByHours, path);
     super.initState();
   }
 
@@ -74,11 +80,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             height: MediaQuery.of(context).size.height - 50,
             child: TabBarView(
               controller: tabController,
-              children: [
-                Personal(placesManager, people, filterHours, isPerson,
-                    isVehicle, onlyAnomalies, sortByHours, path),
-                Places(placesManager)
-              ],
+              children: [viewPersonal, Places(placesManager)],
             ),
           ),
         ],
