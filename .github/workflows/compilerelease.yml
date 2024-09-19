@@ -62,7 +62,9 @@ jobs:
           Add-Content -Path "installer.iss" -Value "Name: ""{group}\Anomaly""; Filename: ""{app}\anomaly.exe"""
 
       - name: Build the Installer
-        run: "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe installer.iss"
+        run: cmd /c "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe installer.iss"
+  
+
 
       - name: Upload installer to GitHub
         uses: softprops/action-gh-release@v2
