@@ -1,5 +1,8 @@
 name: Flutter Compile Release
-on: workflow_dispatch
+on: 
+  push:
+    tags:
+      "*"
 
 jobs: 
   windows:
@@ -31,7 +34,7 @@ jobs:
 
       - name: Build Windows release
         run: flutter build windows --release
-        
+
       - name: Install zip utility
         run: choco install zip
         shell: powershell
