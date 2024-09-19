@@ -1,11 +1,9 @@
 name: Flutter Compile Release
-on:
+on: 
   push:
-    branches:
-      - main  # Specify the branches to watch
     tags:
-      - "*"  # Keep this to trigger on tag pushes as well
-
+      - '*'
+      
 jobs: 
   windows:
     runs-on: windows-latest

@@ -65,8 +65,6 @@ class PlacesManager {
           print("${hour.progettoID} : ${place.id}");
           if (hour.progettoID == place.name) {
             if (place.isOutside) {
-              print(place.isOutside);
-              print(place.name);
               return true;
             }
           }
