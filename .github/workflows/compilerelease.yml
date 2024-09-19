@@ -31,6 +31,10 @@ jobs:
 
       - name: Build Windows release
         run: flutter build windows --release
+        
+      - name: Install zip utility
+        run: choco install zip
+        shell: powershell
 
       - name: Archive release
         run: |
