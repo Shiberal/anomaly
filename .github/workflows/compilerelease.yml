@@ -40,31 +40,32 @@ jobs:
 
       - name: Install Inno Setup
         run: choco install innosetup
-        shell: powershell
+        shell: cmd
 
       - name: Extract Version from Tag
         id: get_version
         run: echo "##[set-output name=VERSION;]${GITHUB_REF#refs/tags/}"
-      
+
       - name: Create Inno Setup Script
+        shell: cmd
         run: |
-          Add-Content -Path "installer.iss" -Value "[Setup]"
-          Add-Content -Path "installer.iss" -Value "AppName=Anomaly"
-          Add-Content -Path "installer.iss" -Value "AppVersion=${{ steps.get_version.outputs.VERSION }}"
-          Add-Content -Path "installer.iss" -Value "DefaultDirName={pf}\Anomaly"
-          Add-Content -Path "installer.iss" -Value "DefaultGroupName=Anomaly"
-          Add-Content -Path "installer.iss" -Value "OutputBaseFilename=installer"
-          Add-Content -Path "installer.iss" -Value "Compression=lzma"
-          Add-Content -Path "installer.iss" -Value "SolidCompression=yes"
-          Add-Content -Path "installer.iss" -Value "[Files]"
-          Add-Content -Path "installer.iss" -Value "Source: ""build\\windows\\x64\\runner\\Release\\*""; DestDir: ""{app}""; Flags: ignoreversion recursesubdirs createallsubdirs"
-          Add-Content -Path "installer.iss" -Value "[Icons]"
-          Add-Content -Path "installer.iss" -Value "Name: ""{group}\Anomaly""; Filename: ""{app}\anomaly.exe"""
+          echo [Setup] > installer.iss
+          echo AppName=Anomaly >> installer.iss
+          echo AppVersion=%VERSION% >> installer.iss
+          echo DefaultDirName={pf}\Anomaly >> installer.iss
+          echo DefaultGroupName=Anomaly >> installer.iss
+          echo OutputBaseFilename=installer >> installer.iss
+          echo Compression=lzma >> installer.iss
+          echo SolidCompression=yes >> installer.iss
+          echo [Files] >> installer.iss
+          echo Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs >> installer.iss
+          echo [Icons] >> installer.iss
+          echo Name: "{group}\Anomaly"; Filename: "{app}\anomaly.exe" >> installer.iss
 
       - name: Build the Installer
+        shell: cmd
         run: |
-          cmd /c "\"C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe\" installer.iss"
-
+          cmd /c "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe installer.iss"
 
       - name: Upload installer to GitHub
         uses: softprops/action-gh-release@v2
