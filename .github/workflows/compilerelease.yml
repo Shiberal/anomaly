@@ -53,7 +53,7 @@ jobs:
           echo AppVerName = Anomaly >> installer.iss
           echo DefaultDirName={pf}\Anomaly >> installer.iss
           echo DefaultGroupName=Anomaly >> installer.iss
-          echo OutputBaseFilename=installer >> installer.iss
+          echo OutputBaseFilename=anomaly >> installer.iss
           echo Compression=lzma >> installer.iss
           echo SolidCompression=yes >> installer.iss
           echo [Files] >> installer.iss
@@ -65,6 +65,11 @@ jobs:
         shell: cmd
         run: |
           cmd /c ""C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" installer.iss"
+          
+      - name: list files in the installer
+        shell: cmd
+        run: dir build\windows\x64\runner\Release\
+
 
       - name: Upload installer to GitHub
         uses: softprops/action-gh-release@v2
@@ -72,4 +77,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: SETUP.EXE
+          files: anomaly.exe
