@@ -10,6 +10,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_excel/excel.dart';
+import 'package:anomaly/utils/printstack.dart';
 
 // ignore: must_be_immutable
 class Personal extends StatefulWidget {
@@ -243,6 +244,15 @@ class _PersonalState extends State<Personal> {
               children: [
                 const SizedBox(height: 10),
                 TextButton(
+                    onPressed: () {
+                      var scheme = PrintScheme(
+                          people: widget.people,
+                          placeManager: widget.placesManager,
+                          filterHours: widget.filterHours);
+                      scheme.generate();
+                    },
+                    child: const Text("Salva Excel")),
+                TextButton(
                   onPressed: () {
                     FilePicker.platform.pickFiles(
                       type: FileType.custom,
@@ -255,7 +265,7 @@ class _PersonalState extends State<Personal> {
                         widget.path = files[0].path!;
                         loadExcel(widget.path);
                       } else {
-                        // User canceled the picker
+                        print("No file selected");
                       }
                     });
                   },
