@@ -65,7 +65,7 @@ jobs:
         shell: cmd
         run: |
           cmd /c ""C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" installer.iss"
-          
+
       - name: list files in the installer
         shell: cmd
         run: dir build\windows\x64\runner\Release\
@@ -77,4 +77,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: anomaly.exe
+          files: D:\a\anomaly\anomaly\Output\anomaly.exe
