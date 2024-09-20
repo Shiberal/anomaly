@@ -10,8 +10,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_excel/excel.dart';
-import 'package:updat/updat.dart';
-import 'package:http/http.dart' as http;
 
 // ignore: must_be_immutable
 class Personal extends StatefulWidget {
@@ -243,26 +241,6 @@ class _PersonalState extends State<Personal> {
             color: Colors.blue,
             child: ListView(
               children: [
-                UpdatWidget(
-                  currentVersion: "1.0.0",
-                  getLatestVersion: () async {
-                    //get latest version from github
-                    String url_repo =
-                        "https://api.github.com/repos/Shiberal/anomaly/releases/latest";
-                    var response = await http.get(Uri.parse(url_repo));
-                    if (response.statusCode == 200) {
-                      return response.body;
-                    } else {
-                      return "1.0.0";
-                    }
-                  },
-                  getBinaryUrl: (latestVersion) async {
-                    // Here you provide the link to the binary the user should download. Make sure it is the correct one for the platform!
-                    return "https://github.com/Shiberal/anomaly/releases/bin.exe";
-                  },
-                  // Lastly, enter your app name so we know what to call your files.
-                  appName: "Updat Example",
-                ),
                 const SizedBox(height: 10),
                 TextButton(
                   onPressed: () {
