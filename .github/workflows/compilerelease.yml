@@ -1,4 +1,5 @@
 name: Flutter Compile Release
+
 on: 
   push:
     tags:
@@ -32,8 +33,9 @@ jobs:
       - name: Enable Windows desktop support
         run: flutter config --enable-windows-desktop
 
-      - name: Create Flutter project
-        run: flutter create .
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Build Windows release
         run: flutter build windows --release
@@ -42,16 +44,12 @@ jobs:
         run: choco install innosetup
         shell: cmd
 
-      - name: Extract Version from Tag
-        id: get_version
-        run: echo "##[set-output name=VERSION;]${GITHUB_REF#refs/tags/}"
-
       - name: Create Inno Setup Script
         shell: cmd
         run: |
           echo [Setup] > installer.iss
           echo AppName=Anomaly >> installer.iss
-          echo AppVersion=${{ env.VERSION }} >> installer.iss
+          echo AppVersion=${{ steps.get_version.outputs.VERSION }} >> installer.iss
           echo DefaultDirName={pf}\Anomaly >> installer.iss
           echo DefaultGroupName=Anomaly >> installer.iss
           echo OutputBaseFilename=installer >> installer.iss
