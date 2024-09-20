@@ -51,7 +51,7 @@ jobs:
         run: |
           echo [Setup] > installer.iss
           echo AppName=Anomaly >> installer.iss
-          echo AppVersion=%VERSION% >> installer.iss
+          echo AppVersion=${{ env.VERSION }} >> installer.iss
           echo DefaultDirName={pf}\Anomaly >> installer.iss
           echo DefaultGroupName=Anomaly >> installer.iss
           echo OutputBaseFilename=installer >> installer.iss
